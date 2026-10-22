@@ -1,5 +1,6 @@
 package com.transportlogger
 
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -36,6 +37,28 @@ class PlacesSeedTest {
             val lng = number(p, "lng")
             assertTrue("$name lat $lat", lat != null && lat in 45.0..46.0)
             assertTrue("$name lng $lng", lng != null && lng in -74.0..-73.0)
+        }
+    }
+
+    /**
+     * The seed must agree with the corrected reference list: three zones once
+     * shipped sitting on a neighbour's building because only the list was fixed.
+     */
+    @Test
+    fun everyPlaceSitsWhereTheReferenceListPutsIt() {
+        val row = Regex("""^(.*?),"(?:[^"]*)",(-?\d+\.\d+),(-?\d+\.\d+)$""")
+        val reference = File("src/main/assets/adresses_corrigees.csv").readLines()
+            .drop(1).mapNotNull { row.find(it.trim().removePrefix("﻿")) }
+            .associate { it.groupValues[1] to (it.groupValues[2].toDouble() to it.groupValues[3].toDouble()) }
+        val seeded = places.associate { p ->
+            val name = Regex(""""name"\s*:\s*"((?:[^"\\]|\\.)*)"""").find(p)!!.groupValues[1]
+            name to (number(p, "lat")!! to number(p, "lng")!!)
+        }
+        assertEquals(reference.keys, seeded.keys)
+        for ((name, at) in seeded) {
+            val (lat, lng) = reference.getValue(name)
+            val off = PlaceStore.distanceMeters(at.first, at.second, lat, lng)
+            assertTrue("$name is ${off.toInt()} m from the reference list", off <= 60.0)
         }
     }
 

@@ -92,6 +92,9 @@ class MainActivity : AppCompatActivity() {
             return
         }
         setContentView(R.layout.activity_main)
+        // Normally already shown over the welcome screen; this covers an
+        // install whose profile was filled in before the notice existed.
+        BetaNotice.showOnce(this)
         Ui.edgeToEdge(this, findViewById(R.id.root), padBottom = false)
         Nav.attach(this, R.id.nav_today)
 

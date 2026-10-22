@@ -15,9 +15,11 @@ What this removes, and why:
     the L (km) and N (total) formulas that read them. The app writes L and N
     as literal numbers.
   * the four dropdowns, which pointed at named ranges on the deleted sheet.
-  * personal data: shared strings no kept cell uses (the matrix sheet's list
-    held people's home addresses), the author in docProps/core.xml, and the
-    logo's alt text (a SharePoint URL carrying an access token).
+  * personal data: the employee header the board pre-filled (C13 name, J13
+    employee number, C14-C16 address), shared strings no kept cell uses (the
+    matrix sheet's list held people's home addresses), the author in
+    docProps/core.xml, and the logo's alt text (a SharePoint URL carrying an
+    access token).
 
 What this deliberately keeps:
 
@@ -27,7 +29,10 @@ What this deliberately keeps:
   * the totals in M48/D50/M50/M54. They only reference cells on the form
     itself, so they still compute from whatever the app writes into N.
 
-Usage:  python tools/strip_template.py <original workbook.xlsx>
+Usage:  python tools/strip_template.py <original workbook.xlsx> [output.xlsx]
+
+The output defaults to the committed asset; pass a second path to write a
+copy elsewhere (for a dry run) and leave the asset alone.
 """
 
 import re
@@ -52,11 +57,16 @@ DROP_ENTRIES = {
 FIRST_TRIP_ROW = 23
 LAST_TRIP_ROW = 47
 
+# The employee header: name, employee number and address. Each user fills
+# these in, so the template ships them blank (styles kept).
+HEADER_CELLS = {"C13", "J13", "C14", "C15", "C16"}
+
 CELL_RE = re.compile(r'<c r="([A-Z]+)(\d+)"([^>]*?)(/>|>.*?</c>)', re.S)
 
 
 def blank_computed_cells(xml: str) -> str:
-    """Drop every formula that depended on the matrix sheet, keeping styles.
+    """Drop every formula that depended on the matrix sheet, and the employee
+    header, keeping styles.
 
     A cell is emptied by collapsing it to its self-closing form, which keeps its
     r and s attributes -- and therefore its borders, fill and number format --
@@ -69,7 +79,8 @@ def blank_computed_cells(xml: str) -> str:
         attrs = re.sub(r'\s+t="[^"]*"', "", attrs)
         helper = col in ("P", "Q", "R") and FIRST_TRIP_ROW <= row <= 54
         computed = col in ("L", "N") and FIRST_TRIP_ROW <= row <= LAST_TRIP_ROW
-        if helper or computed:
+        header = "%s%d" % (col, row) in HEADER_CELLS
+        if helper or computed or header:
             return '<c r="%s%d"%s/>' % (col, row, attrs)
         return m.group(0)
 
@@ -92,14 +103,15 @@ def blank_unused_strings(xml: str, sheet: str) -> str:
 
 
 def main() -> int:
-    if len(sys.argv) != 2:
-        print("usage: python tools/strip_template.py <original workbook.xlsx>", file=sys.stderr)
+    if len(sys.argv) not in (2, 3):
+        print("usage: python tools/strip_template.py <original workbook.xlsx> [output.xlsx]", file=sys.stderr)
         return 2
     source = Path(sys.argv[1]).resolve()
+    target = Path(sys.argv[2]).resolve() if len(sys.argv) == 3 else TARGET
     if not source.exists():
         print("missing source workbook: %s" % source, file=sys.stderr)
         return 1
-    TARGET.parent.mkdir(parents=True, exist_ok=True)
+    target.parent.mkdir(parents=True, exist_ok=True)
 
     with zipfile.ZipFile(source) as src:
         names = src.namelist()
@@ -109,7 +121,7 @@ def main() -> int:
             print("source workbook is not the expected one, missing %s" % missing, file=sys.stderr)
             return 1
 
-        tmp = TARGET.with_suffix(".tmp")
+        tmp = target.with_suffix(".tmp")
         with zipfile.ZipFile(tmp, "w", zipfile.ZIP_DEFLATED) as out:
             for name in names:
                 if name in DROP_ENTRIES:
@@ -155,21 +167,25 @@ def main() -> int:
                         xml = re.sub(r'<Override\b[^>]*PartName="%s"[^>]*/>' % re.escape(part), "", xml)
                     data = xml.encode("utf-8")
 
-                out.writestr(name, data)
+                # A fixed timestamp keeps reruns reproducible, so regenerating
+                # the asset from the same source gives the same entries and dates.
+                info = zipfile.ZipInfo(name, date_time=(1980, 1, 1, 0, 0, 0))
+                info.compress_type = zipfile.ZIP_DEFLATED
+                out.writestr(info, data)
 
-        shutil.move(str(tmp), str(TARGET))
+        shutil.move(str(tmp), str(target))
 
-    verify()
+    verify(target)
 
     before = source.stat().st_size
-    after = TARGET.stat().st_size
-    print("wrote %s  %s -> %s bytes" % (TARGET.relative_to(ROOT), format(before, ","), format(after, ",")))
+    after = target.stat().st_size
+    print("wrote %s  %s -> %s bytes" % (target, format(before, ","), format(after, ",")))
     return 0
 
 
-def verify() -> None:
+def verify(target: Path) -> None:
     """Fail loudly rather than shipping a template Excel would offer to repair."""
-    with zipfile.ZipFile(TARGET) as z:
+    with zipfile.ZipFile(target) as z:
         names = set(z.namelist())
         workbook = z.read("xl/workbook.xml").decode("utf-8")
         rels = z.read("xl/_rels/workbook.xml.rels").decode("utf-8")
@@ -190,6 +206,10 @@ def verify() -> None:
     for leak in ("maison ", "access_token", "sharepoint", "dc:creator>", "lastmodifiedby>"):
         if leak in everything:
             problems.append("personal data survived: %r" % leak)
+    for ref in sorted(HEADER_CELLS):
+        cell = re.search(r'<c r="%s"[^>]*?(/>|>.*?</c>)' % ref, sheet, re.S)
+        if cell and cell.group(1) != "/>":
+            problems.append("header cell %s still has a value" % ref)
     if names & DROP_ENTRIES:
         problems.append("dropped parts are still in the zip: %s" % (names & DROP_ENTRIES))
 

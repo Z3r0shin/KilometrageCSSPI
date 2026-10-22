@@ -48,6 +48,7 @@ class ProfileActivity : AppCompatActivity() {
         val btnBack = findViewById<View>(R.id.btnBack)
         val btnSave = findViewById<Button>(R.id.btnSave)
         if (firstRun) {
+            BetaNotice.showOnce(this)
             btnBack.visibility = View.GONE
             findViewById<TextView>(R.id.profileTitle).apply {
                 text = "Bienvenue"

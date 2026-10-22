@@ -123,7 +123,11 @@ for 1.3:
 - **A fresh install starts with the 128 places** copied from
   `assets/places_seed.json` (outlines included, nobody's home). An existing
   `places.json` is never touched. Regenerate the seed from a phone's
-  `places.json` with the `isHome` entry removed.
+  `places.json` with the `isHome` entry removed. `PlacesSeedTest` fails if a
+  seeded place is more than 60 m from its row in `adresses_corrigees.csv`, so
+  a position corrected in one must be corrected in the other.
+- **A beta notice** (`BetaNotice`) pops up once on first use, over the welcome
+  screen, asking for feedback.
 - Tested on the emulator as a new install on 2026-10-07: welcome screen,
   seeding, profile editing and an export with a sample profile all pass. Not
   tested: a real phone, location permissions and detection on a new install.
@@ -199,6 +203,13 @@ annexe's outline is 37 m from CENTRE PAUL-GRATTON's: with the 20 m margin the
 two touch, and the nearer centre wins. "Corriger l'adresse" itself has still
 not been exercised.
 
+The seed (`places_seed.json`) kept the old positions until 1.3.1, so fresh
+installs got the three zones on the wrong building. 1.3.1 moves them there
+too, with the outline `OsmFootprint` picks (or the 70 m square when OSM has
+none). Two other places differed between the seed and the CSV:
+LE TOURNESOL ANNEXE (RDP) and CANADIAN TIRE PAT. OSM puts both where the
+seed has them, so the CSV coordinates were corrected instead.
+
 ## The morning start that came late (2026-10-22)
 
 A second phone often missed the start of the morning: location came on only
@@ -222,7 +233,7 @@ at the bottom. Bump both for every build that goes to a phone, and tag the
 commit `v<versionName>`. 1.0 (1) was every build up to 2026-10-14; 1.1 (2) adds
 trips by hand, editing and reordering; 1.2 (3) wakes at the window start with
 an exact alarm; 1.3 (4) asks for the claimant's profile and is the first public
-build.
+build; 1.3.1 (5) fixes three seeded zones and adds the beta notice.
 
 APKs are not committed (`*.apk` is gitignored). Each version is attached to
 the GitHub release for its tag as `Kilometrage-CSSPI-v<versionName>.apk`, a
@@ -282,10 +293,13 @@ done
   so the template never needs rebuilding for a rate change.
 - **`tools/strip_template.py` regenerates the shipped asset** from the board's
   original workbook, which is never committed (its distance sheet names people
-  and their homes). If the board reissues the form, pass the new file's path to
-  the script. It verifies its own output and refuses to emit a workbook Excel
-  would call damaged; `FormulaireHeaderTest` fails the build if personal data
-  reaches the asset.
+  and their homes). If the board reissues the form, run
+  `python tools/strip_template.py <workbook.xlsx> [output.xlsx]` (standard
+  library only; without an output it overwrites the asset). It blanks the
+  claimant's header cells and every unused shared string, verifies its own
+  output and refuses to emit a workbook Excel would call damaged;
+  `FormulaireHeaderTest` fails the build if personal data reaches the asset.
+  On 2026-10-22 it reproduced the committed asset entry for entry.
 - **The CSV export is legacy** but deliberately kept: its 5-column header
   `date,depart,arrivee,km,statut` feeds the owner's own `csv_to_formulaire.py`.
   Do not add columns to it without asking.
