@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Bottom slice of a bg_card. -->
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="?attr/colorControlHighlight">
+    <item>
+        <shape>
+            <solid android:color="@color/outline" />
+            <corners
+                android:bottomLeftRadius="20dp"
+                android:bottomRightRadius="20dp" />
+        </shape>
+    </item>
+    <item
+        android:bottom="1dp"
+        android:left="1dp"
+        android:right="1dp">
+        <shape>
+            <solid android:color="@color/surface" />
+            <corners
+                android:bottomLeftRadius="19dp"
+                android:bottomRightRadius="19dp" />
+        </shape>
+    </item>
+</ripple>

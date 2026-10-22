@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A 32dp amber pill inside a 44dp touch target. -->
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/bg_pill_amber"
+    android:insetTop="6dp"
+    android:insetBottom="6dp" />

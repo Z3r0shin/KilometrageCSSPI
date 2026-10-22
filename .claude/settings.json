@@ -1,0 +1,40 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(gh pr:*)",
+      "Bash(gh issue:*)",
+      "Bash(gh repo view:*)",
+      "Bash(adb devices:*)",
+      "Bash(adb logcat:*)",
+      "Bash(adb shell:*)",
+      "Bash(adb install:*)",
+      "Bash(adb exec-out screencap:*)",
+      "Bash(adb pull:*)",
+      "Bash(adb connect:*)",
+      "Bash(./gradlew:*)",
+      "PowerShell(.\\gradlew.bat:*)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/sync-origin.sh\"",
+            "shell": "bash",
+            "timeout": 30,
+            "statusMessage": "Syncing with GitHub..."
+          }
+        ]
+      }
+    ]
+  }
+}

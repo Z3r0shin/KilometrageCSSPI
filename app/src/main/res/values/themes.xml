@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- One theme for both modes: every colour it names is redefined in
+         values-night, and App applies the user's Système / Clair / Sombre choice. -->
+    <style name="Theme.TransportLogger" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorOnPrimary">@color/on_primary</item>
+        <item name="colorPrimaryContainer">@color/green_tint</item>
+        <item name="colorOnPrimaryContainer">@color/green_text</item>
+        <item name="colorSecondary">@color/amber</item>
+        <item name="colorOnSecondary">@color/on_amber</item>
+        <item name="colorSecondaryContainer">@color/green_tint</item>
+        <item name="colorOnSecondaryContainer">@color/green_text</item>
+        <item name="colorSurface">@color/surface</item>
+        <item name="colorOnSurface">@color/text</item>
+        <item name="colorSurfaceVariant">@color/surface_inset</item>
+        <item name="colorOnSurfaceVariant">@color/text_muted</item>
+        <item name="colorSurfaceContainer">@color/surface</item>
+        <item name="colorSurfaceContainerLow">@color/surface</item>
+        <item name="colorSurfaceContainerHigh">@color/surface</item>
+        <item name="colorSurfaceContainerHighest">@color/surface_inset</item>
+        <item name="colorOutline">@color/field_outline</item>
+        <item name="colorOutlineVariant">@color/outline</item>
+        <item name="android:colorBackground">@color/bg</item>
+        <item name="colorOnBackground">@color/text</item>
+        <item name="android:windowBackground">@color/bg</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">@bool/light_bars</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">@bool/light_bars</item>
+        <item name="android:textColorPrimary">@color/text</item>
+        <item name="android:textColorSecondary">@color/text_muted</item>
+        <item name="android:fontFamily">@font/instrument_sans</item>
+        <item name="fontFamily">@font/instrument_sans</item>
+        <item name="bottomSheetDialogTheme">@style/ThemeOverlay.Km.BottomSheet</item>
+    </style>
+</resources>

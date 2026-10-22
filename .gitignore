@@ -1,0 +1,41 @@
+*.iml
+.gradle
+/local.properties
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+# Build outputs (any module)
+build/
+.kotlin/
+
+# IDE
+.idea/
+
+# Claude Code local overrides
+.claude/settings.local.json
+
+# Ad-hoc pulls of app data off the phone
+device-backup-*/
+
+# Claude Code sub-agent worktrees
+.claude/worktrees/
+
+# Never in the public repo: APKs go to GitHub releases, the signing key is
+# copied by hand, the board's original workbook names people and their homes,
+# and anything pulled off a phone holds the user's own data.
+*.apk
+*.keystore
+*.jks
+app/src/main/*.xlsx
+trips.json
+places.json

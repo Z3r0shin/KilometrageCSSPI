@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dark counterparts of values/colors.xml. Anything not listed here is
+         the same in both themes. -->
+    <color name="bg">#0F1512</color>
+    <color name="surface">#18211D</color>
+    <color name="surface_inset">#1E2924</color>
+    <color name="segment_pill">#2C3A33</color>
+    <color name="outline">#2A3731</color>
+    <color name="field_outline">#3A4A42</color>
+    <color name="divider">#243029</color>
+
+    <color name="text">#EDF2EE</color>
+    <color name="text_muted">#A3B3AA</color>
+
+    <color name="primary">#1B7A5C</color>
+    <color name="green_text">#7FD4B0</color>
+    <color name="green_tint">#1C3A2F</color>
+
+    <color name="amber_tint">#3A2C0A</color>
+    <color name="amber_tint_text">#F5C563</color>
+
+    <color name="disabled_bg">#26332D</color>
+    <color name="disabled_text">#8FA097</color>
+    <color name="scrim">#9E000000</color>
+
+    <color name="map_zone_fill">#337FD4B0</color>
+    <color name="map_zone_stroke">#7FD4B0</color>
+</resources>

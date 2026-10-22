@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Top slice of a bg_card: a section of the places list is one card cut into
+     rows, so the RecyclerView can keep recycling them. -->
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="?attr/colorControlHighlight">
+    <item>
+        <shape>
+            <solid android:color="@color/outline" />
+            <corners
+                android:topLeftRadius="20dp"
+                android:topRightRadius="20dp" />
+        </shape>
+    </item>
+    <item
+        android:left="1dp"
+        android:right="1dp"
+        android:top="1dp">
+        <shape>
+            <solid android:color="@color/surface" />
+            <corners
+                android:topLeftRadius="19dp"
+                android:topRightRadius="19dp" />
+        </shape>
+    </item>
+</ripple>

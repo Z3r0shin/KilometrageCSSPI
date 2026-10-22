@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Legend sample of the detection margin drawn around a zone. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="@color/map_zone_fill" />
+    <corners android:radius="3dp" />
+</shape>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Middle slice of a bg_card: side borders only. -->
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="?attr/colorControlHighlight">
+    <item>
+        <shape>
+            <solid android:color="@color/outline" />
+        </shape>
+    </item>
+    <item
+        android:left="1dp"
+        android:right="1dp">
+        <shape>
+            <solid android:color="@color/surface" />
+        </shape>
+    </item>
+</ripple>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Legend sample of a place still drawn with its default square or circle. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="@color/map_home_fill" />
+    <corners android:radius="3dp" />
+    <stroke android:width="2dp" android:color="@color/map_home_stroke" />
+</shape>

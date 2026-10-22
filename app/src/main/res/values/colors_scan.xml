@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The scan screen sits on the camera and is dark in both themes. -->
+    <color name="scan_bg">#0B0F0D</color>
+    <!-- Dims the camera around the viewfinder so white text stays readable
+         even when the label is on white paper. -->
+    <color name="scan_scrim">#B80B0F0D</color>
+    <color name="scan_text_soft">#C9D6CF</color>
+    <color name="scan_label">#9FB0A7</color>
+</resources>

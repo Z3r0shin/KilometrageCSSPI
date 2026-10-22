@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- « Carnet de route » : vert sapin + ambre. Every name here has a
+         counterpart in values-night/colors.xml; layouts use these names only,
+         never a literal hex, so both themes stay in step. -->
+    <color name="bg">#F2F4F0</color>
+    <color name="surface">#FFFFFF</color>
+    <color name="surface_inset">#E4E8E3</color>
+    <color name="segment_pill">#FFFFFF</color>
+    <color name="outline">#DDE3DD</color>
+    <color name="field_outline">#DDE3DD</color>
+    <color name="divider">#E8ECE8</color>
+
+    <color name="text">#15211C</color>
+    <color name="text_muted">#55635C</color>
+
+    <color name="primary">#0F5C45</color>
+    <color name="on_primary">#FFFFFF</color>
+    <color name="green_text">#0A4533</color>
+    <color name="green_tint">#E3EFE9</color>
+
+    <color name="amber">#F2B33D</color>
+    <color name="on_amber">#2A1E00</color>
+    <color name="amber_tint">#FFF1CF</color>
+    <color name="amber_tint_text">#5E4100</color>
+
+    <color name="disabled_bg">#C9D6CF</color>
+    <color name="disabled_text">#55635C</color>
+    <color name="scrim">#8C15211C</color>
+
+    <!-- The status card is the same green in both themes. -->
+    <color name="hero">#0F5C45</color>
+    <color name="on_hero">#FFFFFF</color>
+    <color name="on_hero_muted">#CFE3DA</color>
+    <color name="hero_track">#38FFFFFF</color>
+
+    <color name="white">#FFFFFF</color>
+
+    <!-- Zones sur la carte : avec terrain OSM / sans (carré par défaut) -->
+    <color name="map_zone_fill">#330F5C45</color>
+    <color name="map_zone_stroke">#0F5C45</color>
+    <color name="map_home_fill">#33F2B33D</color>
+    <color name="map_home_stroke">#B57312</color>
+</resources>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/nav_today" android:icon="@drawable/ic_today" android:title="Aujourd\'hui" />
+    <item android:id="@+id/nav_trips" android:icon="@drawable/ic_route" android:title="Trajets" />
+    <item android:id="@+id/nav_places" android:icon="@drawable/ic_place" android:title="Lieux" />
+    <item android:id="@+id/nav_settings" android:icon="@drawable/ic_settings" android:title="Réglages" />
+</menu>

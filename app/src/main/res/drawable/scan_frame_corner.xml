@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Top-left bracket of the viewfinder; the layout turns it for the other
+     three corners. The first path extends the scrim into the corner, so the
+     clear window is rounded like the bracket. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="30dp"
+    android:height="30dp"
+    android:viewportWidth="30"
+    android:viewportHeight="30">
+    <path
+        android:fillColor="@color/scan_scrim"
+        android:pathData="M0,0H14A14,14 0 0 0 0,14Z" />
+    <path
+        android:pathData="M1.5,28.5V14A12.5,12.5 0 0 1 14,1.5H28.5"
+        android:strokeColor="@color/amber"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+</vector>
