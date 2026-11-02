@@ -62,12 +62,20 @@ runtime ones but not "Allow all the time".
 - `Profile.kt` / `ProfileActivity` — the claimant (name, employee number,
   address), asked on first launch and stored on the phone only; every export
   writes the form header from it.
+- `Signature.kt` / `SignatureActivity` / `SignaturePad.kt` — the claimant's
+  signature (opened from the Profil screen): typed block letters, or drawn
+  with a finger and kept as `signature.png` in filesDir. Phone only, like the
+  profile.
 - `KmLookup.kt` — distances from `assets/km_lookup.json`, keyed by exact
   place name with accent/space normalization.
 - `Settings.kt` — preferences plus the days-off / half-day calendar.
 - `FormulaireExport.kt` — fills the paper claim form. Copies every zip entry of
   `assets/formulaire_template.xlsx` verbatim except the sheet, writing values
   into cells that keep their own style. 25 trips per form, then a new file.
+  Each export also dates the requester's DATE box (A56) and signs C56:G56:
+  typed letters as text in C57's plain style, a drawing as a transparent
+  picture on the sheet's drawing layer, standing on the signature line and
+  rising over the form up to the "STATIONNEMENT" line (rows 53-56).
 - `tools/strip_template.py` — regenerates that asset from the board's original
   workbook (never committed; pass its path): drops the distance-matrix sheet,
   the dropdowns and the lookup formulas, blanks personal data, keeps all the
@@ -108,7 +116,9 @@ runtime ones but not "Allow all the time".
 
 - Light and dark share one theme. Layouts and code use the colour names in
   `res/values/colors.xml` (each redefined in `values-night`), never a literal
-  hex; the scan screen, always dark, is the one exception.
+  hex; the scan screen, always dark, is the one exception. The `paper*`
+  colours (the signature pad, white in both themes) are deliberately not
+  redefined in `values-night`.
 - Text uses the `Text.*` styles, buttons the `Button.*` styles. Icons are the
   stroke vectors in `res/drawable/ic_*.xml`; no emoji in the UI.
 - The app lists trips the way the form does: build rows with

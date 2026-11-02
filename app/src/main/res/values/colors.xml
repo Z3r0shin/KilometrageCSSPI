@@ -36,6 +36,13 @@
 
     <color name="white">#FFFFFF</color>
 
+    <!-- The signature pad is a sheet of paper in both themes, so what is
+         drawn looks the way it prints. paper_ink is also the ink saved. -->
+    <color name="paper">#FFFFFF</color>
+    <color name="paper_ink">#16233F</color>
+    <color name="paper_line">#B9C3BC</color>
+    <color name="paper_hint">#6B7670</color>
+
     <!-- Zones sur la carte : avec terrain OSM / sans (carré par défaut) -->
     <color name="map_zone_fill">#330F5C45</color>
     <color name="map_zone_stroke">#0F5C45</color>

@@ -6,7 +6,11 @@ import android.net.Uri
 import androidx.core.content.FileProvider
 import java.io.ByteArrayOutputStream
 import java.io.File
+import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Date
+import java.util.GregorianCalendar
+import java.util.TimeZone
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
@@ -36,6 +40,11 @@ import java.util.zip.ZipOutputStream
  * A line is one trip, or an aller-retour: X -> Y directly followed by Y -> X
  * goes on a single line marked 2, the way it is written by hand. trips.json
  * keeps both legs; the pairing only exists on the form.
+ *
+ * At the bottom, the requester's DATE box gets the day of the export, and the
+ * signature box beside it the saved [Signature]: typed block letters go in the
+ * cell as text, a drawing goes on the sheet's drawing layer as a picture,
+ * standing on the signature line.
  */
 object FormulaireExport {
 
@@ -57,6 +66,31 @@ object FormulaireExport {
     private const val CELL_POSTAL_CODE = "C16"
     private const val CELL_FUNCTION = "J14"
     private const val CELL_SERVICE = "J15"
+
+    /**
+     * The requester's sign-off, bottom left: DATE (A56:B56, a D/M/YYYY date
+     * cell) and the signature box beside it (C56:G56). The box is styled in a
+     * script font; typed block letters borrow the plain style of the
+     * "SIGNATURE" caption under it (C57), which has the same border.
+     */
+    private const val CELL_SIGNED_ON = "A56"
+    private const val CELL_SIGNATURE = "C56"
+    private const val CELL_SIGNATURE_CAPTION = "C57"
+    private const val SIGNATURE_ROW = 56
+    /**
+     * The box itself is one short row. A drawn signature may rise above it, over
+     * the form (the PNG is transparent), up to the row under the
+     * "STATIONNEMENT" line.
+     */
+    private const val SIGNATURE_TOP_ROW = 53
+    private const val SIGNATURE_FIRST_COL = 3   // C
+    private const val SIGNATURE_LAST_COL = 7    // G
+
+    private const val DRAWING = "xl/drawings/drawing1.xml"
+    private const val DRAWING_RELS = "xl/drawings/_rels/drawing1.xml.rels"
+    private const val CONTENT_TYPES = "[Content_Types].xml"
+    private const val SIGNATURE_MEDIA = "xl/media/signature.png"
+    private const val SIGNATURE_REL = "rIdSignature"
 
     /**
      * The form's employee-number cell is numeric. A leading zero would be lost
@@ -82,7 +116,8 @@ object FormulaireExport {
     private val CELL = Regex("""<c r="([A-Z]+\d+)"([^>]*?)(?:/>|>.*?</c>)""", RegexOption.DOT_MATCHES_ALL)
 
     private sealed class Value {
-        class Text(val s: String) : Value()
+        /** [style], when set, replaces the cell's own style index. */
+        class Text(val s: String, val style: String? = null) : Value()
         class Number(val d: Double) : Value()
     }
 
@@ -139,13 +174,17 @@ object FormulaireExport {
 
         val template = ctx.assets.open(TEMPLATE).use { it.readBytes() }
         val profile = Profile.load(ctx)
+        val signature = Signature.load(ctx)
+        val today = SimpleDateFormat("yyyy-MM-dd", Fmt.FR).format(Date())
         // Pairing changes how many lines a month needs, so it runs before paging.
         val pages = lines(trips.sortedBy { it.ts }).chunked(ROWS_PER_FORM)
 
         return pages.mapIndexed { index, page ->
             val name = if (pages.size == 1) "formulaire_$monthKey.xlsx"
             else "formulaire_${monthKey}_${index + 1}-de-${pages.size}.xlsx"
-            File(dir, name).also { it.writeBytes(fill(template, page, monthKey, profile)) }
+            File(dir, name).also {
+                it.writeBytes(fill(template, page, monthKey, profile, signature, today))
+            }
         }
     }
 
@@ -173,27 +212,150 @@ object FormulaireExport {
 
     // ---- Workbook ----
 
-    internal fun fill(template: ByteArray, page: List<Line>, monthKey: String, profile: Profile): ByteArray {
-        val values = cellValues(page, monthKey, profile)
-        val out = ByteArrayOutputStream(template.size + 8 * 1024)
-
+    /**
+     * [signedOn] (yyyy-MM-dd) goes in the DATE box beside the signature; null
+     * leaves it blank, as does a null [signature] its box.
+     */
+    internal fun fill(
+        template: ByteArray, page: List<Line>, monthKey: String, profile: Profile,
+        signature: Signature? = null, signedOn: String? = null
+    ): ByteArray {
+        val entries = LinkedHashMap<String, ByteArray>()
         ZipInputStream(template.inputStream()).use { zin ->
-            ZipOutputStream(out).use { zout ->
-                while (true) {
-                    val entry = zin.nextEntry ?: break
-                    val bytes = zin.readBytes()
-                    zout.putNextEntry(ZipEntry(entry.name))
-                    zout.write(
-                        if (entry.name == SHEET)
-                            applyValues(bytes.toString(Charsets.UTF_8), values).toByteArray(Charsets.UTF_8)
-                        else bytes
-                    )
-                    zout.closeEntry()
-                }
+            while (true) {
+                val entry = zin.nextEntry ?: break
+                entries[entry.name] = zin.readBytes()
+            }
+        }
+
+        val sheet = entries.getValue(SHEET).toString(Charsets.UTF_8)
+        val values = cellValues(page, monthKey, profile)
+        signedOn?.let(::excelDate)?.let { values[CELL_SIGNED_ON] = Value.Number(it.toDouble()) }
+        when (signature) {
+            is Signature.Typed -> if (signature.text.isNotBlank()) {
+                values[CELL_SIGNATURE] = Value.Text(signature.text, styleOf(sheet, CELL_SIGNATURE_CAPTION))
+            }
+            is Signature.Drawn -> addPicture(entries, sheet, signature)
+            null -> {}
+        }
+        entries[SHEET] = applyValues(sheet, values).toByteArray(Charsets.UTF_8)
+
+        val out = ByteArrayOutputStream(template.size + 8 * 1024)
+        ZipOutputStream(out).use { zout ->
+            for ((name, bytes) in entries) {
+                zout.putNextEntry(ZipEntry(name))
+                zout.write(bytes)
+                zout.closeEntry()
             }
         }
         return out.toByteArray()
     }
+
+    /** Excel's day number for a yyyy-MM-dd date: days since 1899-12-30. */
+    internal fun excelDate(date: String): Long? {
+        val p = date.split("-").map { it.toIntOrNull() ?: return null }
+        if (p.size != 3) return null
+        val utc = GregorianCalendar(TimeZone.getTimeZone("UTC")).apply {
+            clear()
+            set(p[0], p[1] - 1, p[2])
+        }
+        return utc.timeInMillis / 86_400_000L + 25_569L
+    }
+
+    private fun styleOf(sheet: String, ref: String): String? =
+        CELL.findAll(sheet).firstOrNull { it.groupValues[1] == ref }
+            ?.groupValues?.get(2)?.let { Regex("""\bs="(\d+)"""").find(it)?.groupValues?.get(1) }
+
+    // ---- Signature picture ----
+
+    private const val EMU_PER_PX = 9_525L
+    private const val EMU_PER_PT = 12_700L
+
+    /** Arial 10's widest digit, in pixels: what spreadsheet column widths are counted in. */
+    private const val DIGIT_PX = 7.0
+
+    /**
+     * Put the drawn signature on the sheet: a PNG in xl/media, a relationship
+     * from the drawing to it, and an anchor that centres it over the signature
+     * box, standing on the line under it and as tall as the room up to
+     * [SIGNATURE_TOP_ROW] allows (or as wide as the box, if it is wider).
+     */
+    private fun addPicture(entries: MutableMap<String, ByteArray>, sheet: String, sig: Signature.Drawn) {
+        val drawing = entries[DRAWING]?.toString(Charsets.UTF_8) ?: return
+        val rels = entries[DRAWING_RELS]?.toString(Charsets.UTF_8) ?: return
+
+        val cols = (SIGNATURE_FIRST_COL..SIGNATURE_LAST_COL).map { columnEmu(sheet, it) }
+        val rows = (SIGNATURE_TOP_ROW..SIGNATURE_ROW).map { rowEmu(sheet, it) }
+        val boxWidth = cols.sum()
+        val room = rows.sum()
+        val pad = EMU_PER_PT * 3 / 2
+
+        var cy = room - 2 * pad
+        var cx = cy * sig.width / sig.height
+        if (cx > boxWidth - 2 * pad) {
+            cx = boxWidth - 2 * pad
+            cy = cx * sig.height / sig.width
+        }
+
+        // Centre it, bottom on the line, then say which cell its top left
+        // corner falls in.
+        var x = (boxWidth - cx) / 2
+        var col = 0
+        while (col < cols.size - 1 && x >= cols[col]) x -= cols[col++]
+        var y = room - pad - cy
+        var row = 0
+        while (row < rows.size - 1 && y >= rows[row]) y -= rows[row++]
+
+        val id = (Regex("""cNvPr[^>]*\bid="(\d+)"""").findAll(drawing)
+            .maxOfOrNull { it.groupValues[1].toInt() } ?: 0) + 1
+        val anchor = """<xdr:oneCellAnchor><xdr:from>""" +
+            """<xdr:col>${SIGNATURE_FIRST_COL - 1 + col}</xdr:col><xdr:colOff>$x</xdr:colOff>""" +
+            """<xdr:row>${SIGNATURE_TOP_ROW - 1 + row}</xdr:row><xdr:rowOff>$y</xdr:rowOff></xdr:from>""" +
+            """<xdr:ext cx="$cx" cy="$cy"/><xdr:pic><xdr:nvPicPr>""" +
+            """<xdr:cNvPr id="$id" name="Signature" descr="Signature"/>""" +
+            """<xdr:cNvPicPr><a:picLocks noChangeAspect="1"/></xdr:cNvPicPr></xdr:nvPicPr>""" +
+            """<xdr:blipFill><a:blip r:embed="$SIGNATURE_REL"/><a:stretch><a:fillRect/></a:stretch></xdr:blipFill>""" +
+            """<xdr:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="$cx" cy="$cy"/></a:xfrm>""" +
+            """<a:prstGeom prst="rect"><a:avLst/></a:prstGeom></xdr:spPr></xdr:pic>""" +
+            """<xdr:clientData/></xdr:oneCellAnchor>"""
+        val rel = """<Relationship Id="$SIGNATURE_REL" """ +
+            """Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" """ +
+            """Target="../media/signature.png"/>"""
+
+        entries[DRAWING] = drawing.replace("</xdr:wsDr>", "$anchor</xdr:wsDr>").toByteArray(Charsets.UTF_8)
+        entries[DRAWING_RELS] = rels.replace("</Relationships>", "$rel</Relationships>").toByteArray(Charsets.UTF_8)
+        entries[SIGNATURE_MEDIA] = sig.png
+        entries[CONTENT_TYPES]?.toString(Charsets.UTF_8)?.let { types ->
+            if (!types.contains("Extension=\"png\"")) {
+                entries[CONTENT_TYPES] = types.replace(
+                    "</Types>", """<Default Extension="png" ContentType="image/png"/></Types>"""
+                ).toByteArray(Charsets.UTF_8)
+            }
+        }
+    }
+
+    /** Width of a column (1 = A), read from the sheet's own <cols>. */
+    private fun columnEmu(sheet: String, col: Int): Long {
+        val width = Regex("""<col\b[^>]*>""").findAll(sheet).map { it.value }.firstOrNull {
+            val min = attr(it, "min")?.toIntOrNull() ?: return@firstOrNull false
+            val max = attr(it, "max")?.toIntOrNull() ?: return@firstOrNull false
+            col in min..max
+        }?.let { attr(it, "width")?.toDoubleOrNull() }
+            ?: Regex("""<sheetFormatPr\b[^>]*>""").find(sheet)?.value
+                ?.let { attr(it, "defaultColWidth")?.toDoubleOrNull() }
+            ?: 8.43
+        return Math.round(width * DIGIT_PX) * EMU_PER_PX
+    }
+
+    /** Height of a row, read from the sheet. */
+    private fun rowEmu(sheet: String, row: Int): Long {
+        val pt = Regex("""<row r="$row"[^>]*>""").find(sheet)?.value
+            ?.let { attr(it, "ht")?.toDoubleOrNull() } ?: 15.0
+        return Math.round(pt * EMU_PER_PT)
+    }
+
+    private fun attr(tag: String, name: String): String? =
+        Regex("""\b$name="([^"]*)"""").find(tag)?.groupValues?.get(1)
 
     /**
      * Columns, as the form names them: A JOUR, B POINT DE DÉPART,
@@ -204,7 +366,7 @@ object FormulaireExport {
      * C15 VILLE, C16 CODE POSTAL, J14 FONCTION, J15 SERVICE. A blank profile
      * field leaves its cell as the template has it.
      */
-    private fun cellValues(page: List<Line>, monthKey: String, profile: Profile): Map<String, Value> {
+    private fun cellValues(page: List<Line>, monthKey: String, profile: Profile): MutableMap<String, Value> {
         val values = HashMap<String, Value>()
         values[CELL_RATE] = Value.Number(RATE_PER_KM)
 
@@ -254,7 +416,10 @@ object FormulaireExport {
             val ref = m.groupValues[1]
             val value = values[ref] ?: return@replace m.value
             // Drop any cached type; we set our own.
-            val attrs = m.groupValues[2].replace(Regex("""\s+t="[^"]*""""), "")
+            var attrs = m.groupValues[2].replace(Regex("""\s+t="[^"]*""""), "")
+            if (value is Value.Text && value.style != null) {
+                attrs = attrs.replace(Regex("""\bs="\d+""""), """s="${value.style}"""")
+            }
             when (value) {
                 is Value.Text -> """<c r="$ref"$attrs t="inlineStr"><is><t>${escape(value.s)}</t></is></c>"""
                 is Value.Number -> """<c r="$ref"$attrs><v>${number(value.d)}</v></c>"""

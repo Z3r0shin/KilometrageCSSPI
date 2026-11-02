@@ -1,12 +1,14 @@
 package com.transportlogger
 
 import android.content.Intent
+import android.graphics.BitmapFactory
 import android.graphics.Rect
 import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -90,6 +92,32 @@ class ProfileActivity : AppCompatActivity() {
             if (firstRun) startActivity(Intent(this, MainActivity::class.java))
             finish()
         }
+
+        findViewById<View>(R.id.rowSignature).setOnClickListener {
+            // The name as typed here, saved or not, seeds the block letters.
+            startActivity(
+                Intent(this, SignatureActivity::class.java)
+                    .putExtra(SignatureActivity.EXTRA_NAME, text(R.id.editName))
+            )
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        showSignature()
+    }
+
+    /** The saved signature on its strip of paper, or an invitation to add one. */
+    private fun showSignature() {
+        val sig = Signature.load(this)
+        val image = findViewById<ImageView>(R.id.signatureImage)
+        val text = findViewById<TextView>(R.id.signatureText)
+        findViewById<View>(R.id.signaturePaper).visibility = if (sig == null) View.GONE else View.VISIBLE
+        findViewById<View>(R.id.signatureNone).visibility = if (sig == null) View.VISIBLE else View.GONE
+        image.setImageBitmap((sig as? Signature.Drawn)?.let { BitmapFactory.decodeByteArray(it.png, 0, it.png.size) })
+        image.visibility = if (sig is Signature.Drawn) View.VISIBLE else View.GONE
+        text.text = (sig as? Signature.Typed)?.text
+        text.visibility = if (sig is Signature.Typed) View.VISIBLE else View.GONE
     }
 
     /** Scrolls a field fully into view, with its label above and some air below. */
