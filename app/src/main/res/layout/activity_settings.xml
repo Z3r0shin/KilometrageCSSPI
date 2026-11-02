@@ -574,6 +574,55 @@
                 android:paddingEnd="4dp"
                 android:text="La taille sert aux nouveaux lieux. « Appliquer » transforme en carrés de cette taille tous les lieux dont le terrain n\'a pas été trouvé sur la carte." />
 
+            <!-- Application -->
+            <TextView
+                style="@style/Text.Label"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:layout_marginBottom="8dp"
+                android:text="Application" />
+
+            <LinearLayout
+                android:id="@+id/rowUpdate"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_card"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
+                android:gravity="center_vertical"
+                android:minHeight="58dp"
+                android:orientation="horizontal"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp">
+
+                <ImageView
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:layout_marginEnd="12dp"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ic_download"
+                    app:tint="@color/text_muted" />
+
+                <TextView
+                    android:id="@+id/updateLabel"
+                    style="@style/Text.Body"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Rechercher une mise à jour" />
+            </LinearLayout>
+
+            <TextView
+                style="@style/Text.Caption"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:paddingStart="4dp"
+                android:paddingEnd="4dp"
+                android:text="L\'application vérifie aussi d\'elle-même une fois par jour. Android peut demander de confirmer l\'installation." />
+
             <TextView
                 android:id="@+id/appVersion"
                 style="@style/Text.Caption"

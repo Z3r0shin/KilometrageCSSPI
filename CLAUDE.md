@@ -22,6 +22,12 @@ goes to a phone, and tag the commit `v<versionName>`. APKs are never committed:
 attach the build to the GitHub release for its tag as
 `Kilometrage-CSSPI-v<versionName>.apk`.
 
+Phones update themselves from that release (`Updater.kt`), so the release
+is the deployment: it must be published (drafts and pre-releases are not
+"latest"), the asset name must follow the pattern above, and the APK must be
+signed with the shared key. The release notes are shown in the update dialog;
+paragraphs that mention the .apk are left out there.
+
 Phone builds must be signed with the shared `debug.keystore` at the repo root.
 It is gitignored (a public signing key would let anyone ship an "update" over
 users' installs); copy it to a new machine by hand. Without it Gradle signs
@@ -66,6 +72,10 @@ runtime ones but not "Allow all the time".
   signature (opened from the Profil screen): typed block letters, or drawn
   with a finger and kept as `signature.png` in filesDir. Phone only, like the
   profile.
+- `Updater.kt` / `UpdatePrompt.kt` / `UpdateReceiver.kt` — self-update from
+  the latest GitHub release: checked once a day on opening (and from
+  Réglages), the APK verified against GitHub's SHA-256 and its own package
+  name and versionCode, then handed to Android's PackageInstaller.
 - `KmLookup.kt` — distances from `assets/km_lookup.json`, keyed by exact
   place name with accent/space normalization.
 - `Settings.kt` — preferences plus the days-off / half-day calendar.

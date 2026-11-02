@@ -147,6 +147,8 @@ class MainActivity : AppCompatActivity() {
         // The service may have been killed (reboot, OEM battery saver, reinstall)
         // while the flag stayed on. Opening the app re-arms it.
         LocationService.ensureRunning(this)
+        UpdatePrompt.resume(this)
+        UpdatePrompt.checkQuietly(this)
         switchTracking.isChecked = isRunning()
         // Whatever was said before the pause is stale; the next broadcast repeats it.
         diagnostic = null

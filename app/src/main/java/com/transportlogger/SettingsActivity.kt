@@ -72,6 +72,17 @@ class SettingsActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.appVersion).text =
             "Version ${info.versionName} (${PackageInfoCompat.getLongVersionCode(info)})"
 
+        val rowUpdate = findViewById<View>(R.id.rowUpdate)
+        val updateLabel = findViewById<TextView>(R.id.updateLabel)
+        rowUpdate.setOnClickListener {
+            rowUpdate.isEnabled = false
+            updateLabel.text = "Recherche…"
+            UpdatePrompt.checkNow(this) {
+                rowUpdate.isEnabled = true
+                updateLabel.text = "Rechercher une mise à jour"
+            }
+        }
+
         mapOf(
             R.id.themeSystem to Settings.THEME_SYSTEM,
             R.id.themeLight to Settings.THEME_LIGHT,
@@ -141,6 +152,7 @@ class SettingsActivity : AppCompatActivity() {
         super.onResume()
         Nav.sync(this, R.id.nav_settings)
         refreshLabels()      // the profile and the congés summary change behind us
+        UpdatePrompt.resume(this)
     }
 
     private fun pickTime(isStart: Boolean) {
